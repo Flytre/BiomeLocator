@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "biome_locator",
+  "version": "${version}",
+  "name": "Biome Locator",
+  "description": "Locate biomes using the biome locator!",
+  "authors": [
+    "Flytre"
+  ],
+  "contact": {
+    "website": "https://www.flytre.net"
+  },
+  "license": "MIT",
+  "icon": "assets/biome_locator/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "net.flytre.biome_locator.client.BiomeLocatorClient"
+    ],
+    "main": [
+      "net.flytre.biome_locator.BiomeLocator"
+    ]
+  },
+  "mixins": [
+    "biome_locator.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.10.8",
+    "fabric": "*",
+    "minecraft": "1.16.x",
+    "flytre_lib": "*"
+  }
+}

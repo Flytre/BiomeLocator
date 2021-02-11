@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.flytre.biome_locator.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "WeightedBlockStateProviderAccessor"
+  ],
+  "client": [
+    "ModelPredicateProviderRegistryMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
