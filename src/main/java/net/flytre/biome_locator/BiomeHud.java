@@ -3,6 +3,7 @@ package net.flytre.biome_locator;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.flytre.biome_locator.config.Config;
 import net.flytre.biome_locator.config.UILocation;
 import net.flytre.flytre_lib.client.gui.Hud;
 import net.minecraft.client.font.TextRenderer;
@@ -78,24 +79,27 @@ public class BiomeHud extends Hud {
                 yPos = (i) -> maxY - 130 + ((i + 1) * 15 + (i % 2 == 0 ? -5 : -10));
         }
 
+        Config config = BiomeLocator.CONFIG.getConfig();
+        int color = config.getClient().useHighContrastColors() ? -1 : 0xFF5c5c5c;
+
         if (LocatorItem.hasPosition(stack)) {
             BlockPos pos = LocatorItem.getPosition(stack);
             if (pos.equals(new BlockPos(-1, -1, -1))) {
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.status"), xPos.apply(0), yPos.apply(0), -1, location);
-                draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.searching"), xPos.apply(1), yPos.apply(1), 0xFF5c5c5c, location);
+                draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.searching"), xPos.apply(1), yPos.apply(1), color, location);
             } else if (pos.equals(new BlockPos(-11, -11, -11))) {
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.status"), xPos.apply(0), yPos.apply(0), -1, location);
-                draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.not_found"), xPos.apply(1), yPos.apply(1), 0xFF5c5c5c, location);
+                draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.not_found"), xPos.apply(1), yPos.apply(1), color, location);
             } else {
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.status"), xPos.apply(0), yPos.apply(0), -1, location);
-                draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.found"), xPos.apply(1), yPos.apply(1), 0xFF5c5c5c, location);
+                draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.found"), xPos.apply(1), yPos.apply(1), color, location);
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.biome"), xPos.apply(2), yPos.apply(2), -1, location);
                 Identifier biome = LocatorItem.getBiome(stack);
-                draw(textRenderer, matrixStack, Text.of(biome == null ? "Error" : BiomeUtils.getBiomeName(biome)), xPos.apply(3), yPos.apply(3), 0xFF5c5c5c, location);
+                draw(textRenderer, matrixStack, Text.of(biome == null ? "Error" : BiomeUtils.getBiomeName(biome)), xPos.apply(3), yPos.apply(3), color, location);
 
                 String formattedCoordinates = pos.getX() + ", " + pos.getZ();
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.coordinates"), xPos.apply(4), yPos.apply(4), -1, location);
-                draw(textRenderer, matrixStack, Text.of(formattedCoordinates), xPos.apply(5), yPos.apply(5), 0xFF5c5c5c, location);
+                draw(textRenderer, matrixStack, Text.of(formattedCoordinates), xPos.apply(5), yPos.apply(5), color, location);
 
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.distance"), xPos.apply(6), yPos.apply(6), -1, location);
                 int distance = (int) Math.sqrt(pos.getSquaredDistance(player.getX(), pos.getY(), player.getZ(), false));
@@ -105,9 +109,9 @@ public class BiomeHud extends Hud {
 
 
                 if (playerBiome.equals(biome))
-                    draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.reached"), xPos.apply(7), yPos.apply(7), 0xFF5c5c5c, location);
+                    draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.reached"), xPos.apply(7), yPos.apply(7), color, location);
                 else
-                    draw(textRenderer, matrixStack, Text.of("" + distance), xPos.apply(7), yPos.apply(7), 0xFF5c5c5c, location);
+                    draw(textRenderer, matrixStack, Text.of("" + distance), xPos.apply(7), yPos.apply(7), color, location);
             }
         }
     }

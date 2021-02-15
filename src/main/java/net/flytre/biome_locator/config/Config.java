@@ -21,13 +21,19 @@ public class Config {
 
     public static class ClientConfig {
         private final UILocation uiLocation;
+        private final boolean high_contrast_mode;
 
         public ClientConfig() {
             this.uiLocation = UILocation.TOP_LEFT;
+            this.high_contrast_mode = false;
         }
 
         public UILocation getUiLocation() {
             return uiLocation;
+        }
+
+        public boolean useHighContrastColors() {
+            return high_contrast_mode;
         }
     }
 

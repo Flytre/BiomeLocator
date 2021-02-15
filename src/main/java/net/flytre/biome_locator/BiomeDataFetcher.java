@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 public class BiomeDataFetcher {
 
     public static final Random RANDOM = new Random();
-    public static HashMap<Identifier, Set<String>> mobs = new HashMap<>();
-    public static HashMap<Identifier, Set<String>> blocks = new HashMap<>();
+    public static Map<Identifier, Set<String>> mobs = new HashMap<>();
+    public static Map<Identifier, Set<String>> blocks = new HashMap<>();
     public static boolean cached = false;
 
     @Environment(EnvType.CLIENT)

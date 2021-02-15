@@ -26,7 +26,7 @@ dependencies {
 
     // PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
     // You may need to force-disable transitiveness on them.
-    modImplementation 'com.github.Flytre:FlytreLib:4a14b32f6d9a3e2fa73357f509066d16eb0d4fd6'
+    modImplementation 'com.github.Flytre:FlytreLib:bbdbbf44a9a61b813a74a77193715fb72a144965'
 }
 
 processResources {
