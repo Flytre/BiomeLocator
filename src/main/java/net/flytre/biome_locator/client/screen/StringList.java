@@ -2,6 +2,7 @@ package net.flytre.biome_locator.client.screen;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.EntryListWidget;
 import net.minecraft.client.util.math.MatrixStack;
 
@@ -40,6 +41,11 @@ public class StringList extends EntryListWidget<StringList.StringEntry> {
         renderList(matrices, k, l, mouseX, mouseY, delta);
     }
 
+    @Override
+    public void appendNarrations(NarrationMessageBuilder builder) {
+
+    }
+
     public static class StringEntry extends EntryListWidget.Entry<StringEntry> {
 
         private final String toDisplay;
@@ -52,7 +58,7 @@ public class StringList extends EntryListWidget<StringList.StringEntry> {
 
         @Override
         public void render(MatrixStack matrices, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            drawCenteredString(matrices,textRenderer,toDisplay,x + entryWidth / 2, y + (entryHeight)/ 2, 0x808080);
+            drawCenteredText(matrices,textRenderer,toDisplay,x + entryWidth / 2, y + (entryHeight)/ 2, 0x808080);
 
         }
     }

@@ -1,11 +1,13 @@
-package net.flytre.biome_locator;
+package net.flytre.biome_locator.client;
 
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.flytre.biome_locator.config.Config;
+import net.flytre.biome_locator.common.BiomeUtils;
+import net.flytre.biome_locator.common.BiomeLocatorItem;
+import net.flytre.biome_locator.config.ClientConfig;
 import net.flytre.biome_locator.config.UILocation;
-import net.flytre.flytre_lib.client.gui.Hud;
+import net.flytre.flytre_lib.api.gui.Hud;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -48,9 +50,9 @@ public class BiomeHud extends Hud {
 
         stack = player.getOffHandStack();
 
-        if (!(stack.getItem() instanceof LocatorItem))
+        if (!(stack.getItem() instanceof BiomeLocatorItem))
             stack = player.getMainHandStack();
-        if (!(stack.getItem() instanceof LocatorItem))
+        if (!(stack.getItem() instanceof BiomeLocatorItem))
             return;
 
         if (client.world == null)
@@ -59,31 +61,34 @@ public class BiomeHud extends Hud {
 
         Function<Integer, Integer> xPos = null;
         Function<Integer, Integer> yPos = null;
-        UILocation location = BiomeLocator.CONFIG.getConfig().getClient().getUiLocation();
+
+        ClientConfig config = BiomeLocatorClient.CONFIG.getConfig();
+
+        UILocation location = config.uiLocation;
 
         switch (location) {
-            case TOP_LEFT:
+            case TOP_LEFT -> {
                 xPos = (i) -> 10;
                 yPos = (i) -> (i + 1) * 15 + (i % 2 == 0 ? -5 : -10);
-                break;
-            case TOP_RIGHT:
+            }
+            case TOP_RIGHT -> {
                 xPos = (i) -> maxX - 10;
                 yPos = (i) -> (i + 1) * 15 + (i % 2 == 0 ? -5 : -10);
-                break;
-            case BOTTOM_LEFT:
+            }
+            case BOTTOM_LEFT -> {
                 xPos = (i) -> 10;
                 yPos = (i) -> maxY - 130 + ((i + 1) * 15 + (i % 2 == 0 ? -5 : -10));
-                break;
-            case BOTTOM_RIGHT:
+            }
+            case BOTTOM_RIGHT -> {
                 xPos = (i) -> maxX - 10;
                 yPos = (i) -> maxY - 130 + ((i + 1) * 15 + (i % 2 == 0 ? -5 : -10));
+            }
         }
 
-        Config config = BiomeLocator.CONFIG.getConfig();
-        int color = config.getClient().useHighContrastColors() ? -1 : 0xFF5c5c5c;
+        int color = config.highContrastMode ? -1 : 0xFF5c5c5c;
 
-        if (LocatorItem.hasPosition(stack)) {
-            BlockPos pos = LocatorItem.getPosition(stack);
+        if (BiomeLocatorItem.hasPosition(stack)) {
+            BlockPos pos = BiomeLocatorItem.getPosition(stack);
             if (pos.equals(new BlockPos(-1, -1, -1))) {
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.status"), xPos.apply(0), yPos.apply(0), -1, location);
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.searching"), xPos.apply(1), yPos.apply(1), color, location);
@@ -94,7 +99,7 @@ public class BiomeHud extends Hud {
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.status"), xPos.apply(0), yPos.apply(0), -1, location);
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.found"), xPos.apply(1), yPos.apply(1), color, location);
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.biome"), xPos.apply(2), yPos.apply(2), -1, location);
-                Identifier biome = LocatorItem.getBiome(stack);
+                Identifier biome = BiomeLocatorItem.getBiome(stack);
                 draw(textRenderer, matrixStack, Text.of(biome == null ? "Error" : BiomeUtils.getBiomeName(biome)), xPos.apply(3), yPos.apply(3), color, location);
 
                 String formattedCoordinates = pos.getX() + ", " + pos.getZ();
@@ -104,11 +109,11 @@ public class BiomeHud extends Hud {
                 draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.distance"), xPos.apply(6), yPos.apply(6), -1, location);
                 int distance = (int) Math.sqrt(pos.getSquaredDistance(player.getX(), pos.getY(), player.getZ(), false));
 
-                Biome pBiome = client.world.getBiome(player.getBlockPos());
-                Identifier playerBiome = BiomeUtils.getWorldId(pBiome, client.world);
+                Biome playerBiome = client.world.getBiome(player.getBlockPos());
+                Identifier playerBiomeId = BiomeUtils.getId(playerBiome, client.world);
 
 
-                if (playerBiome.equals(biome))
+                if (playerBiomeId.equals(biome))
                     draw(textRenderer, matrixStack, new TranslatableText("hud.biome_locator.reached"), xPos.apply(7), yPos.apply(7), color, location);
                 else
                     draw(textRenderer, matrixStack, Text.of("" + distance), xPos.apply(7), yPos.apply(7), color, location);

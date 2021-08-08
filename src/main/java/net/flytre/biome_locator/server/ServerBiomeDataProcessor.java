@@ -1,11 +1,8 @@
-package net.flytre.biome_locator;
+package net.flytre.biome_locator.server;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.flytre.biome_locator.common.BiomeUtils;
 import net.flytre.biome_locator.mixin.WeightedBlockStateProviderAccessor;
+import net.flytre.biome_locator.network.GiantBiomeS2CPacket;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -14,7 +11,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
-import net.minecraft.util.collection.WeightedList;
+import net.minecraft.util.collection.DataPool;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
@@ -30,58 +27,34 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class BiomeDataFetcher {
+public class ServerBiomeDataProcessor {
 
     public static final Random RANDOM = new Random();
-    public static Map<Identifier, Set<String>> mobs = new HashMap<>();
-    public static Map<Identifier, Set<String>> blocks = new HashMap<>();
-    public static boolean cached = false;
+    private static Cache cache = null;
 
-    @Environment(EnvType.CLIENT)
-    public static void requestCacheIfNeeded() {
-        if (mobs.size() > 0 || blocks.size() > 0)
-            return;
-        ClientPlayNetworking.send(BiomeLocator.REQUEST_CACHE, PacketByteBufs.empty());
-    }
 
-    public static void receivedCacheRequest(ServerPlayerEntity player, World world) {
+    public static void sendDataToClient(ServerPlayerEntity player, World world) {
         cacheAll(world);
-        GiantBiomePacket packet = new GiantBiomePacket(mobs, blocks);
-        ServerPlayNetworking.send(player, GiantBiomePacket.PACKET_ID, packet.toBuf());
+        GiantBiomeS2CPacket infoPacket = new GiantBiomeS2CPacket(cache.mobs, cache.blocks);
+        player.networkHandler.sendPacket(infoPacket);
     }
 
-
-    public static void cacheAll(World world) {
-        if (!cached || (mobs.size() == 0 && blocks.size() == 0)) {
-            cached = true;
+    private static void cacheAll(World world) {
+        if (cache == null) {
+            Map<Identifier, Set<String>> mobs = new HashMap<>(), blocks = new HashMap<>();
             for (Biome biome : BiomeUtils.getAllBiomes(world)) {
                 mobs.put(BiomeUtils.getId(biome, world), getMobSpawns(biome));
                 blocks.put(BiomeUtils.getId(biome, world), getMiscResources(biome));
             }
+            cache = new Cache(mobs, blocks);
         }
-    }
-
-    public static boolean hasResource(String string, Biome biome, World world) {
-        if (mobs.size() == 0 && blocks.size() == 0)
-            return false;
-        Set<String> resources = new HashSet<>();
-        Identifier id = BiomeUtils.getId(biome, world);
-        if(id == null || !mobs.containsKey(id) || !blocks.containsKey(id))
-            return false;
-        resources.addAll(mobs.get(id));
-        resources.addAll(blocks.get(id));
-        for (String str : resources) {
-            if (str.toLowerCase().contains(string))
-                return true;
-        }
-        return false;
     }
 
     public static Set<String> getMobSpawns(Biome biome) {
         Set<String> result = new HashSet<>();
         SpawnSettings spawnSettings = biome.getSpawnSettings();
         for (SpawnGroup group : SpawnGroup.values()) {
-            for (SpawnSettings.SpawnEntry spawnEntry : spawnSettings.getSpawnEntry(group)) {
+            for (SpawnSettings.SpawnEntry spawnEntry : spawnSettings.getSpawnEntries(group).getEntries()) {
                 result.add(translateKey("entity", Registry.ENTITY_TYPE.getId(spawnEntry.type)));
             }
         }
@@ -98,8 +71,8 @@ public class BiomeDataFetcher {
         if (provider instanceof WeightedBlockStateProvider) {
 
             WeightedBlockStateProvider weighted = (WeightedBlockStateProvider) provider;
-            WeightedList<BlockState> states = ((WeightedBlockStateProviderAccessor) weighted).getList();
-            states.stream().forEach(i -> result.add(i.getBlock().getTranslationKey()));
+            DataPool<BlockState> states = ((WeightedBlockStateProviderAccessor) weighted).getList();
+            states.getEntries().forEach(i -> result.add(i.getData().getBlock().getTranslationKey()));
             return result;
         }
         for (int i = 0; i < 100; i++) {
@@ -223,4 +196,10 @@ public class BiomeDataFetcher {
 
         return states.stream().map(Block::getTranslationKey).collect(Collectors.toSet());
     }
+
+    private record Cache(Map<Identifier, Set<String>> mobs, Map<Identifier, Set<String>> blocks) {
+
+    }
+
+
 }

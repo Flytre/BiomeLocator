@@ -10,7 +10,7 @@
   "contact": {
     "website": "https://www.flytre.net"
   },
-  "license": "MIT",
+  "license": "Custom License",
   "icon": "assets/biome_locator/icon.png",
   "environment": "*",
   "entrypoints": {
@@ -18,7 +18,7 @@
       "net.flytre.biome_locator.client.BiomeLocatorClient"
     ],
     "main": [
-      "net.flytre.biome_locator.BiomeLocator"
+      "net.flytre.biome_locator.common.BiomeLocator"
     ]
   },
   "mixins": [
@@ -26,8 +26,7 @@
   ],
   "depends": {
     "fabricloader": ">=0.10.8",
-    "fabric": "*",
-    "minecraft": "1.16.x",
-    "flytre_lib": ">=0.2.5"
+    "minecraft": "1.17.x",
+    "flytre_lib" : ">=1.0.1"
   }
 }

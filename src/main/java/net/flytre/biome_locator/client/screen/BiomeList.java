@@ -2,6 +2,7 @@ package net.flytre.biome_locator.client.screen;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.EntryListWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.world.biome.Biome;
@@ -42,8 +43,9 @@ public class BiomeList extends EntryListWidget<BiomeEntry> {
         renderList(matrices, k, l, mouseX, mouseY, delta);
     }
 
+    @Override
     protected void renderList(MatrixStack matrices, int x, int y, int mouseX, int mouseY, float delta) {
-        int i = this.getItemCount();
+        int i = this.getEntryCount();
 
         for (int j = 0; j < i; ++j) {
             int k = this.getRowTop(j);
@@ -54,7 +56,7 @@ public class BiomeList extends EntryListWidget<BiomeEntry> {
                 int o = this.getRowWidth();
                 int r;
 
-                if(isSelectedItem(j)) {
+                if(isSelectedEntry(j)) {
                     r = this.left + this.width / 2 - o / 2;
                     int q = this.left + this.width / 2 + o / 2;
                     DrawableHelper.fill(matrices, r + 1, k, q - 1, k + 1, 0x994f4f4f);
@@ -72,7 +74,7 @@ public class BiomeList extends EntryListWidget<BiomeEntry> {
 
 
     public boolean hasSelection() {
-        return getSelected() != null;
+        return getSelectedOrNull() != null;
     }
 
     public void selectBiome(BiomeEntry entry) {
@@ -92,5 +94,10 @@ public class BiomeList extends EntryListWidget<BiomeEntry> {
             addEntry(new BiomeEntry(this, biome));
         }
         selectBiome(null);
+    }
+
+    @Override
+    public void appendNarrations(NarrationMessageBuilder builder) {
+        //UH WHAT
     }
 }

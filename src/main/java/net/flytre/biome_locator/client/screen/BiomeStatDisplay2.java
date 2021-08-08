@@ -1,8 +1,10 @@
 package net.flytre.biome_locator.client.screen;
 
-import net.flytre.biome_locator.BiomeDataFetcher;
-import net.flytre.biome_locator.BiomeUtils;
+import net.flytre.biome_locator.client.ClientDataStorage;
+import net.flytre.biome_locator.common.BiomeUtils;
+import net.flytre.flytre_lib.api.gui.button.TranslucentButton;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.MatrixStack;
@@ -12,7 +14,10 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.biome.Biome;
 
-import java.util.*;
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class BiomeStatDisplay2 extends Screen {
@@ -31,8 +36,8 @@ public class BiomeStatDisplay2 extends Screen {
         Identifier id = BiomeUtils.getId(biome,page1.getSelectionScreen().world);
 
         if(!page1.isRabbit()) {
-            this.mobs = new ArrayList<>(BiomeDataFetcher.mobs.get(id)).stream().map(I18n::translate).distinct().collect(Collectors.toList());
-            this.resources = new ArrayList<>(BiomeDataFetcher.blocks.get(id)).stream().map(I18n::translate).distinct().collect(Collectors.toList());
+            this.mobs = new ArrayList<>(ClientDataStorage.mobs.get(id)).stream().map(I18n::translate).distinct().collect(Collectors.toList());
+            this.resources = new ArrayList<>(ClientDataStorage.blocks.get(id)).stream().map(I18n::translate).distinct().collect(Collectors.toList());
         } else {
             this.mobs = new ArrayList<>(Collections.singleton("entity.minecraft.rabbit")).stream().map(I18n::translate).distinct().collect(Collectors.toList());
             this.resources = new ArrayList<>(Collections.singleton("block.biome_locator.rabbit_ore")).stream().map(I18n::translate).distinct().collect(Collectors.toList());
@@ -71,12 +76,16 @@ public class BiomeStatDisplay2 extends Screen {
 
 
     public void init() {
-        buttons.clear();
-        addButton(new FancyButton(10, height - 30, 110, 20, new TranslatableText("gui.biome_locator.previous"), (onPress) -> MinecraftClient.getInstance().openScreen(page1)));
-        addButton(new FancyButton(width - 120, height - 30, 110, 20, new TranslatableText("gui.biome_locator.search"), (onPress) -> {
+
+        List<Element> toRemove = new ArrayList<>();
+        children().forEach(i -> {if(i instanceof AbstractButton) toRemove.add(i);});
+        toRemove.forEach(this::remove);
+
+        addDrawableChild(new TranslucentButton(10, height - 30, 110, 20, new TranslatableText("gui.biome_locator.previous"), (onPress) -> MinecraftClient.getInstance().setScreen(page1)));
+        addDrawableChild(new TranslucentButton(width - 120, height - 30, 110, 20, new TranslatableText("gui.biome_locator.search"), (onPress) -> {
             page1.getSelectionScreen().search(biome);
             assert client != null;
-            client.openScreen(null);
+            client.setScreen(null);
         }));
 
         if (mobList == null) {

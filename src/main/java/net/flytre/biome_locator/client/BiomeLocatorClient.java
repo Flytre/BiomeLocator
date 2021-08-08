@@ -3,13 +3,13 @@ package net.flytre.biome_locator.client;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.flytre.biome_locator.*;
+import net.flytre.biome_locator.common.BiomeLocator;
+import net.flytre.biome_locator.common.BiomeLocatorItem;
+import net.flytre.biome_locator.config.ClientConfig;
 import net.flytre.biome_locator.mixin.ModelPredicateProviderRegistryMixin;
-import net.flytre.biome_locator.client.screen.BiomeSelectionScreen;
-import net.flytre.biome_locator.client.screen.BiomeStatDisplay;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.item.ModelPredicateProvider;
+import net.flytre.flytre_lib.api.config.ConfigHandler;
+import net.flytre.flytre_lib.api.config.ConfigRegistry;
+import net.minecraft.client.item.UnclampedModelPredicateProvider;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
@@ -22,20 +22,24 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.biome.Biome;
 import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public class BiomeLocatorClient implements ClientModInitializer {
 
+
+    public static final ConfigHandler<ClientConfig> CONFIG = new ConfigHandler<>(new ClientConfig(), "biome_locator_client","config.biome_locator");
+
     @Override
     public void onInitializeClient() {
 
-        ModelPredicateProviderRegistryMixin.register(BiomeLocator.BIOME_LOCATOR, new Identifier("angle"), new ModelPredicateProvider() {
+        ConfigRegistry.registerClientConfig(CONFIG);
+
+        ModelPredicateProviderRegistryMixin.register(BiomeLocator.BIOME_LOCATOR, new Identifier("angle"), new UnclampedModelPredicateProvider() {
             private final AngleInterpolator value = new AngleInterpolator();
             private final AngleInterpolator speed = new AngleInterpolator();
 
-            public float call(ItemStack itemStack, @Nullable ClientWorld clientWorld, @Nullable LivingEntity livingEntity) {
+            public float unclampedCall(ItemStack itemStack, @Nullable ClientWorld clientWorld, @Nullable LivingEntity livingEntity, int seed) {
                 Entity entity = livingEntity != null ? livingEntity : itemStack.getHolder();
                 if (entity == null) {
                     return 0.0F;
@@ -44,17 +48,17 @@ public class BiomeLocatorClient implements ClientModInitializer {
                         clientWorld = (ClientWorld) entity.world;
                     }
 
-                    BlockPos blockPos = LocatorItem.hasPosition(itemStack) ? LocatorItem.getPosition(itemStack) : getSpawnPos(clientWorld); //POS
+                    BlockPos blockPos = BiomeLocatorItem.hasPosition(itemStack) ? BiomeLocatorItem.getPosition(itemStack) : getSpawnPos(clientWorld); //POS
                     long l = clientWorld.getTime();
                     if (blockPos != null && !(entity.getPos().squaredDistanceTo((double) blockPos.getX() + 0.5D, entity.getPos().getY(), (double) blockPos.getZ() + 0.5D) < 9.999999747378752E-6D)) {
                         boolean bl = livingEntity instanceof PlayerEntity && ((PlayerEntity) livingEntity).isMainPlayer();
                         double e = 0.0D;
                         if (bl) {
-                            e = livingEntity.yaw;
+                            e = livingEntity.getYaw();
                         } else if (entity instanceof ItemFrameEntity) {
                             e = this.getItemFrameAngleOffset((ItemFrameEntity) entity);
                         } else if (entity instanceof ItemEntity) {
-                            e = 180.0F - ((ItemEntity) entity).method_27314(0.5F) / 6.2831855F * 360.0F;
+                            e = 180.0F - ((ItemEntity) entity).getRotation(0.5F) / 6.2831855F * 360.0F;
                         } else if (livingEntity != null) {
                             e = livingEntity.bodyYaw;
                         }
@@ -100,35 +104,8 @@ public class BiomeLocatorClient implements ClientModInitializer {
             }
         });
 
+        new BiomeHud();
 
-        ClientPlayNetworking.registerGlobalReceiver(BiomeLocator.OPEN_UI_PACKET, (client, handler, buf, responseSender) -> {
-
-            MinecraftClient mc = MinecraftClient.getInstance();
-            PlayerEntity player = mc.player;
-            client.execute(() -> {
-                if(player.isSneaking()) {
-                    BiomeSelectionScreen selectionScreen = new BiomeSelectionScreen(player.world);
-                    Biome biome = MinecraftClient.getInstance().world.getBiome(player.getBlockPos());
-                    Identifier id = BiomeUtils.getWorldId(biome, player.world);
-                    Biome exact = BiomeUtils.getBiome(id, player.world);
-                    mc.openScreen(new BiomeStatDisplay(selectionScreen, exact));
-                } else {
-                    mc.openScreen(new BiomeSelectionScreen(player.world));
-                }
-                BiomeDataFetcher.requestCacheIfNeeded();
-            });
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(GiantBiomePacket.PACKET_ID, (client, handler, buf, responseSender) -> {
-
-            GiantBiomePacket packet = GiantBiomePacket.fromPacket(buf);
-            client.execute(() -> {
-                BiomeDataFetcher.mobs = packet.getMobs();
-                BiomeDataFetcher.blocks = packet.getBlocks();
-            });
-        });
-
-        BiomeHud biomeHud = new BiomeHud();
     }
 
 

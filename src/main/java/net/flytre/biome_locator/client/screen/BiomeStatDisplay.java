@@ -1,8 +1,10 @@
 package net.flytre.biome_locator.client.screen;
 
-import net.flytre.biome_locator.BiomeDataFetcher;
-import net.flytre.biome_locator.BiomeUtils;
+import net.flytre.biome_locator.client.ClientDataStorage;
+import net.flytre.biome_locator.common.BiomeUtils;
+import net.flytre.flytre_lib.api.gui.button.TranslucentButton;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.MatrixStack;
@@ -10,6 +12,10 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.biome.Biome;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BiomeStatDisplay extends Screen {
 
@@ -23,7 +29,7 @@ public class BiomeStatDisplay extends Screen {
     private final String temperature;
     private final String rainfall;
     private final String highHumidity;
-    private FancyButton nextButton;
+    private TranslucentButton nextButton;
     private final boolean rabbit;
 
     public BiomeStatDisplay(BiomeSelectionScreen selectionScreen, Biome biome) {
@@ -96,7 +102,7 @@ public class BiomeStatDisplay extends Screen {
     public void tick() {
         super.tick();
         Identifier id = BiomeUtils.getId(biome,getSelectionScreen().world);
-        nextButton.active = BiomeDataFetcher.mobs.get(id) != null;
+        nextButton.active = ClientDataStorage.mobs.get(id) != null;
     }
 
     public BiomeSelectionScreen getSelectionScreen() {
@@ -161,17 +167,22 @@ public class BiomeStatDisplay extends Screen {
 
 
     public void init() {
-        buttons.clear();
-        addButton(new FancyButton(10, height - 30, 110, 20, new TranslatableText("gui.biome_locator.back"), (onPress) -> {
-            MinecraftClient.getInstance().openScreen(selectionScreen);
+        List<Element> toRemove = new ArrayList<>();
+        children().forEach(i -> {if(i instanceof AbstractButton) toRemove.add(i);});
+        toRemove.forEach(this::remove);
+
+        addDrawableChild(new TranslucentButton(10, height - 30, 110, 20, new TranslatableText("gui.biome_locator.back"), (onPress) -> {
+            MinecraftClient.getInstance().setScreen(selectionScreen);
             selectionScreen.updateSearch();
         }));
-        addButton(new FancyButton(width - 120, height - 30, 110, 20, new TranslatableText("gui.biome_locator.search"), (onPress) -> {
+        addDrawableChild(new TranslucentButton(width - 120, height - 30, 110, 20, new TranslatableText("gui.biome_locator.search"), (onPress) -> {
             selectionScreen.search(biome);
             assert client != null;
-            client.openScreen(null);
+            client.setScreen(null);
         }));
 
-        nextButton = addButton(new FancyButton(width - 120, height - 60, 110, 20, new TranslatableText("gui.biome_locator.next"), (onPress) -> MinecraftClient.getInstance().openScreen(new BiomeStatDisplay2(this))));
+        nextButton = addDrawableChild(new TranslucentButton(width - 120, height - 60, 110, 20, new TranslatableText("gui.biome_locator.next"), (onPress) -> MinecraftClient.getInstance().setScreen(new BiomeStatDisplay2(this))));
+
+        super.init();
     }
 }

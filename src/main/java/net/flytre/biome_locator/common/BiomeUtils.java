@@ -1,4 +1,4 @@
-package net.flytre.biome_locator;
+package net.flytre.biome_locator.common;
 
 import com.google.common.collect.Maps;
 import net.fabricmc.api.EnvType;
@@ -9,7 +9,6 @@ import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
-import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -17,14 +16,9 @@ import net.minecraft.world.biome.Biome;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 public class BiomeUtils {
-
-    /*
-    TODO: REQUIRE A WORLD FOR ALL OPERATIONS
-     */
 
     private static final Map<String, String> modNameCache = Maps.newHashMap();
 
@@ -35,11 +29,7 @@ public class BiomeUtils {
     }
 
     public static Identifier getId(Biome biome, World world) {
-        return getRegistryKey(world).getId(biome);
-    }
-
-    public static Identifier getWorldId(Biome biome, World world) {
-        return world.getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
+        return getRegistry(world).getId(biome);
     }
 
 
@@ -70,18 +60,13 @@ public class BiomeUtils {
         return s;
     }
 
-
-    public static MutableRegistry<Biome> getRegistryKey(World world) {
+    public static Registry<Biome> getRegistry(World world) {
         return world.getRegistryManager().get(Registry.BIOME_KEY);
     }
 
     public static List<Biome> getAllBiomes(World world) {
-        return getRegistryKey(world).stream().filter(Objects::nonNull).collect(Collectors.toList());
+        return getRegistry(world).stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
 
-
-    private static String translate(String type, Identifier id) {
-        return I18n.translate(Util.createTranslationKey(type, id));
-    }
 }

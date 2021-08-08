@@ -1,6 +1,6 @@
 package net.flytre.biome_locator.client.screen;
 
-import net.flytre.biome_locator.BiomeUtils;
+import net.flytre.biome_locator.common.BiomeUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.widget.EntryListWidget;
@@ -27,17 +27,11 @@ public class BiomeEntry extends EntryListWidget.Entry<BiomeEntry> {
 
     @Override
     public void render(MatrixStack matrices, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-        Text precipitation;
-        switch (biome.getPrecipitation()) {
-            case RAIN:
-                precipitation = new TranslatableText("weather.biome_locator.rain").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xff0049bf)));
-                break;
-            case SNOW:
-                precipitation = new TranslatableText("weather.biome_locator.snow").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xffbfbfbf)));
-                break;
-            default:
-                precipitation = new TranslatableText("weather.biome_locator.none").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xff4f4f4f)));
-        }
+        Text precipitation = switch (biome.getPrecipitation()) {
+            case RAIN -> new TranslatableText("weather.biome_locator.rain").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xff0049bf)));
+            case SNOW -> new TranslatableText("weather.biome_locator.snow").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xffbfbfbf)));
+            default -> new TranslatableText("weather.biome_locator.none").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xff4f4f4f)));
+        };
 
         Text temperature;
         if (biome.getTemperature() <= 0.5) {
@@ -48,24 +42,26 @@ public class BiomeEntry extends EntryListWidget.Entry<BiomeEntry> {
             temperature = new TranslatableText("temperature.biome_locator.warm").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xffc48300)));
         }
 
-        TextRenderer textRenderer = client.textRenderer;
-
         TextColor color = biome.getCategory() == Biome.Category.OCEAN ?
                 TextColor.fromRgb(biome.getWaterColor()) :
-                biome.getCategory() == Biome.Category.NETHER ||biome.getCategory() == Biome.Category.THEEND || biome.getCategory() == Biome.Category.ICY ?
+                biome.getCategory() == Biome.Category.NETHER || biome.getCategory() == Biome.Category.THEEND || biome.getCategory() == Biome.Category.ICY ?
                         TextColor.fromRgb(biome.getFogColor()) :
                         TextColor.fromRgb(biome.getFoliageColor());
 
         Text name = new LiteralText(BiomeUtils.getBiomeName(biome, selectionScreen.world)).setStyle(Style.EMPTY.withColor(color));
-        Text src = new LiteralText(BiomeUtils.getMod(biome, selectionScreen.world)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x665555FF)).withItalic(true));
+        Text mod = new LiteralText(BiomeUtils.getMod(biome, selectionScreen.world)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x665555FF)).withItalic(true));
+        drawCoreInfo(matrices, y, entryHeight, name, temperature, precipitation, mod);
+    }
 
+    protected void drawCoreInfo(MatrixStack matrices, int y, int entryHeight, Text name, Text temperature, Text precipitation, Text mod) {
+        TextRenderer textRenderer = client.textRenderer;
         double height = textRenderer.fontHeight;
         double requiredHeight = height * 4 + (2 * 3); //3 2 pixel gaps
         double start = (entryHeight + 4 - requiredHeight) / 2;
         drawCenteredText(matrices, name, 0.5f, (int) (y + start), 0xffffff);
         drawCenteredText(matrices, temperature, 0.5f, (int) (y + start + textRenderer.fontHeight + 2), 0x808080);
         drawCenteredText(matrices, precipitation, 0.5f, (int) (y + start + textRenderer.fontHeight * 2 + 4), 0x808080);
-        drawCenteredText(matrices, src, 0.5f, (int) (y + start + textRenderer.fontHeight * 3 + 6), 0x808080);
+        drawCenteredText(matrices, mod, 0.5f, (int) (y + start + textRenderer.fontHeight * 3 + 6), 0x808080);
     }
 
 
