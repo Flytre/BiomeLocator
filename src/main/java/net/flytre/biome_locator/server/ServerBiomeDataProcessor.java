@@ -1,6 +1,7 @@
 package net.flytre.biome_locator.server;
 
 import net.flytre.biome_locator.common.BiomeUtils;
+import net.flytre.biome_locator.mixin.PlacedFeatureAccessor;
 import net.flytre.biome_locator.mixin.WeightedBlockStateProviderAccessor;
 import net.flytre.biome_locator.network.GiantBiomeS2CPacket;
 import net.minecraft.block.Block;
@@ -17,10 +18,10 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.feature.*;
 import net.minecraft.world.gen.stateprovider.BlockStateProvider;
 import net.minecraft.world.gen.stateprovider.WeightedBlockStateProvider;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -44,7 +45,7 @@ public class ServerBiomeDataProcessor {
             Map<Identifier, Set<String>> mobs = new HashMap<>(), blocks = new HashMap<>();
             for (Biome biome : BiomeUtils.getAllBiomes(world)) {
                 mobs.put(BiomeUtils.getId(biome, world), getMobSpawns(biome));
-                blocks.put(BiomeUtils.getId(biome, world), getMiscResources(biome));
+                blocks.put(BiomeUtils.getId(biome, world), getMiscResources(biome, world));
             }
             cache = new Cache(mobs, blocks);
         }
@@ -82,13 +83,16 @@ public class ServerBiomeDataProcessor {
         return result;
     }
 
-    public static Set<String> getMiscResources(Biome biome) {
+    public static Set<String> getMiscResources(Biome biome, World world) {
         final Set<String> result = new HashSet<>();
 
-        for (List<Supplier<ConfiguredFeature<?, ?>>> list : biome.getGenerationSettings().getFeatures()) {
-            for (Supplier<ConfiguredFeature<?, ?>> feature : list) {
-                FeatureConfig config = getConfig(feature.get());
-                result.addAll(getHardcodedResources(biome, getFeature(feature.get())));
+        for (List<Supplier<PlacedFeature>> list : biome.getGenerationSettings().getFeatures()) {
+            for (Supplier<PlacedFeature> feature : list) {
+
+                ConfiguredFeature<?, ?> configuredFeature = ((PlacedFeatureAccessor) feature.get()).getFeature().get();
+
+                FeatureConfig config = configuredFeature.getConfig();
+                result.addAll(getHardcodedResources(biome, configuredFeature.getFeature()));
                 if (config != null) {
                     for (Field field : getFields(config)) {
                         try {
@@ -114,26 +118,6 @@ public class ServerBiomeDataProcessor {
         return result;
     }
 
-    private static @Nullable FeatureConfig getConfig(ConfiguredFeature<?, ?> feature) {
-        while (feature.config instanceof DecoratedFeatureConfig) {
-            feature = ((DecoratedFeatureConfig) feature.config).feature.get();
-        }
-        if (feature.config instanceof FeatureConfig) {
-            return feature.config;
-        }
-        return null;
-    }
-
-    private static @Nullable Feature<?> getFeature(ConfiguredFeature<?, ?> feature) {
-        while (feature.config instanceof DecoratedFeatureConfig) {
-            feature = ((DecoratedFeatureConfig) feature.config).feature.get();
-        }
-        if (feature.feature instanceof Feature<?>) {
-            return feature.feature;
-        }
-        return null;
-    }
-
     private static <T> List<Field> getFields(T t) {
         List<Field> fields = new ArrayList<>();
         Class<?> clazz = t.getClass();
@@ -147,6 +131,9 @@ public class ServerBiomeDataProcessor {
 
     private static Set<String> getHardcodedResources(Biome biome, Feature<?> feature) {
         Set<Block> states = new HashSet<>();
+
+        //add Geode stuff
+
         if (feature instanceof BambooFeature) {
             states.add(Blocks.BAMBOO);
             states.add(Blocks.PODZOL);
